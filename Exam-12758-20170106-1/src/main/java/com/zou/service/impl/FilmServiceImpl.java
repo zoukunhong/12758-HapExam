@@ -30,8 +30,16 @@ public class FilmServiceImpl implements FilmService{
 		}
         ResponseData<Film> responseData = new ResponseData<>();
         
-        responseData.setRows(filmMapper.select(page));
         responseData.setTotal(filmMapper.selectCount((Film) page.getEntity()));
+        int totalPage = responseData.getTotal()/page.getPageSize();
+        if(responseData.getTotal()%page.getPageSize() != 0){
+            totalPage++;
+        }
+        if(page.getPage() > totalPage){
+            page.setPage(totalPage);
+        }
+        responseData.setRows(filmMapper.select(page));
+       
         
         return responseData;
 	}
