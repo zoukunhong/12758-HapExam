@@ -1,0 +1,468 @@
+
+<#include "/include/header.html">
+    <body>
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+    <script>
+        function  refresh() {
+            $.ajax({
+                type: "GET",
+                url: '${base.contextPath}/SaleOrder?headerId=${RequestParameters.headerId!0}',
+                success: function (data) {
+                    var obj = data.rows[0] || {};
+                    viewModel.model.headerId = obj.headerId;
+                    viewModel.model.orderNumber = obj.orderNumber;
+                    viewModel.model.companyId = obj.companyId;
+                    viewModel.model.customerId = obj.customerId;
+                    viewModel.model.orderDate = obj.orderDate;
+                    viewModel.model.totalPrice = obj.totalPrice;
+                    viewModel.model.orderStatus = obj.orderStatus;
+
+                    $('#grid').data('kendoGrid').dataSource.page(1);
+                }
+            });
+        };
+        var viewModel = kendo.observable({
+            model: {headerId:0,orderNumber:"",companyId:"",customerId:"",orderDate:"",orderStatus:"NEW"},
+            save : function () {
+                var type = isedit ? 'PUT' :  'POST';
+                var param = Hap.prepareQueryParameter(viewModel.model.toJSON());
+
+                $.ajax({
+                    type: type,
+                    url: '${base.contextPath}/SaleOrder',
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: JSON.stringify(param),
+                    success: function (data) {
+                        if(data != null){
+                            kendo.ui.showInfoDialog({
+                                title: "<@spring.message 'hap.message_point'/>",
+                                width: 400,
+                                message: '<@spring.message "hap.save_success"/>'
+                            });
+                            viewModel.model.headerId = data.headerId;
+                            isedit = true;
+                            $("#grid").data("kendoGrid").saveChanges();
+                        }
+                    }
+                });
+            },
+            delete : function () {
+                if(isedit){
+                    var param = Hap.prepareQueryParameter(viewModel.model.toJSON());
+                    $.ajax({
+                        type: "DELETE",
+                        url: '${base.contextPath}/SaleOrder',
+                        contentType: "application/json",
+                        dataType: "json",
+                        data: JSON.stringify(param),
+                        success: function (data) {
+                            if(data > 0){
+                                kendo.ui.showInfoDialog({
+                                    title: "<@spring.message 'hap.message_point'/>",
+                                    width: 400,
+                                    message: "<@spring.message 'hap.mesg_delete'/>"
+                                });
+                            }
+                        }
+                    });
+                }else{
+                    kendo.ui.showInfoDialog({
+                        title: "<@spring.message 'hap.message_point'/>",
+                        width: 400,
+                        message: "<@spring.message 'hap.data_not_save'/>"
+                    });
+                    return;
+                }
+            },
+            submit : function () {
+                var param = Hap.prepareQueryParameter(viewModel.model.toJSON());
+                param.orderStatus = "SUBMITED";
+                $.ajax({
+                    type: "PUT",
+                    url: '${base.contextPath}/SaleOrder',
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: JSON.stringify(param),
+                    success: function (data) {
+                        if(data != null){
+                            kendo.ui.showInfoDialog({
+                                title: "<@spring.message 'hap.message_point'/>",
+                                width: 400,
+                                message: '<@spring.message "hap.submited"/>'
+                            });
+                            refresh();
+                        }
+                    }
+                });
+            },
+            approve : function () {
+                var param = Hap.prepareQueryParameter(viewModel.model.toJSON());
+                param.orderStatus = "APPROVED";
+                $.ajax({
+                    type: "PUT",
+                    url: '${base.contextPath}/SaleOrder',
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: JSON.stringify(param),
+                    success: function (data) {
+                        if(data != null){
+                            kendo.ui.showInfoDialog({
+                                title: "<@spring.message 'hap.message_point'/>",
+                                width: 400,
+                                message: '<@spring.message "hap.approved"/>'
+                            });
+                            refresh();
+                        }
+                    }
+                });
+            },
+            reject : function () {
+                var param = Hap.prepareQueryParameter(viewModel.model.toJSON());
+                param.orderStatus = "REJECTED";
+                $.ajax({
+                    type: "PUT",
+                    url: '${base.contextPath}/SaleOrder',
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: JSON.stringify(param),
+                    success: function (data) {
+                        if(data != null){
+                            kendo.ui.showInfoDialog({
+                                title: "<@spring.message 'hap.message_point'/>",
+                                width: 400,
+                                message: '<@spring.message "hap.rejected"/>'
+                            });
+                            refresh();
+                        }
+                    }
+                });
+            },
+            print : function () {
+
+            },
+            back : function () {
+
+            }
+        });
+        var isedit = '${RequestParameters.isedit!0}' == '1';
+        if (isedit) {
+            refresh();
+        };
+    </script>
+    <div class="col-sm-12" style="margin-top: 10px;">
+        <div id="tabstrip">
+            <div id="page-content">
+                <div class="panel" id="form-div" style="padding: 0px;border:none;box-shadow: none;">
+                    <form class="form-horizontal" id="myForm">
+                        <div class="panel-body">
+                            <div class="row" style="margin-bottom: 10px;">
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label"><@spring.message "hap.order_number" /></label>
+                                        <div class="col-sm-8">
+                                            <input type="text" style="width: 100%" required data-bind="value:model.orderNumber" class="k-textbox">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label"><@spring.message "hap.company_name"/></label>
+                                        <div class="col-sm-8">
+                                            <input id="companysLov" type=text data-bind="value:model.companyId"
+                                                   style="width:50%"
+                                                   required
+                                                   validationMessage="<@spring.message 'hap.validation.notempty'/>"/>
+                                            <script>
+                                                $("#companysLov").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "COMPANYS_LOV")}, {}));
+                                            </script>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label"><@spring.message "hap.customer_name"/></label>
+                                        <div class="col-sm-8">
+                                            <input id="customerLov" type=text data-bind="value:model.customerId"
+                                                   style="width:50%"
+                                                   required
+                                                   validationMessage="<@spring.message 'hap.validation.notempty'/>"/>
+                                        </div>
+                                        <script>
+                                            $("#customerLov").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "CUSTOMER_LOV")}, {
+                                                query : function (e){
+                                                    if(viewModel.model.companyId != null && viewModel.model.companyId > 0){
+                                                        e.param['companyId'] = viewModel.model.companyId;
+                                                    }
+                                                }
+                                            }));
+                                        </script>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row ">
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label"><@spring.message "hap.order_date"/></label>
+                                        <div class="col-sm-8">
+                                            <input style="width: 100%" data-role="datetimepicker" required data-bind="value:model.orderDate" class="k-datetimepicker">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label"><@spring.message "hap.order_total"/></label>
+                                        <div class="col-sm-8">
+                                            <input type="text" style="width: 100%" readonly="readonly" data-bind="value:model.totalPrice" class="k-textbox" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label"><@spring.message "hap.order_status"/></label>
+                                        <div class="col-sm-8">
+                                            <input type="text" style="width: 100%" readonly="readonly" data-bind="value:model.orderStatus" class="k-textbox" value="NEW">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-sm-8">
+                            <span class="btn btn-default" data-bind="click:save"><@spring.message "hap.save"/></span>
+                            <span class="btn btn-default" data-bind="click:submit"><@spring.message "hap.submit"/></span>
+                            <span class="btn btn-default" data-bind="click:approve"><@spring.message "hap.approve"/></span>
+                            <span class="btn btn-default" data-bind="click:reject"><@spring.message "hap.reject"/></span>
+                            <span class="btn btn-default" data-bind="click:delete"><@spring.message "hap.order_delete"/></span>
+                            <span class="btn btn-default" data-bind="click:print"><@spring.message "hap.print"/></span>
+                            <span class="btn btn-default" data-bind="click:back"><@spring.message "hap.back"/></span>
+                        </div>
+                    </div>
+                </div>
+                <script>kendo.bind($('#form-div'), viewModel);</script>
+                <div class="col-sm-12" style="margin-top: 10px;">
+                    <ul class="nav nav-tabs" id="mytab">
+                        <li class="active"><a href="#maintain" data-toggle="tab"><@spring.message "hap.maintain"/></a></li>
+                        <li class=""><a href="#other" data-toggle="tab"><@spring.message "hap.other"/></a></li>
+                    </ul>
+                    <div id="tabContent" class="tab-content">
+                        <div class="tab-pane fade in active" style="margin-top: 10px;" id="maintain">
+                            <div id="grid"></div>
+                        </div>
+                        <div id="other" class="tab-pane fade" style="margin-top: 10px;">
+                            <div id="grid2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </body>
+    <script>
+        dataSource = new kendo.data.DataSource({
+            transport: {
+                <!--读记录-->
+                read: function (options) {
+                    if (viewModel.model.headerId == 0) {
+                        return;
+                    }
+                    var param = Hap.prepareQueryParameter(viewModel.model.toJSON(), options.data);
+                    $.ajax({
+                        url: "${base.contextPath}/OrderLine",
+                        type: "GET",
+                        dataType: "json",
+                        data: param,
+                        success: function (data) {
+                            // 扩展点
+                            options.success(data);
+                        }
+                    });
+                },
+                <!--添加记录-->
+                create: function (options) {
+                    if(viewModel.model.headerId == 0){
+                        viewModel.save();
+                        return;
+                    }
+                    var param = Hap.prepareQueryParameter(options.data);
+                    param.headerId = viewModel.model.headerId;
+                    $.ajax({
+                        url: "${base.contextPath}/OrderLine",
+                        type: "POST",
+                        contentType: "application/json",
+                        dataType: "json",
+                        data: JSON.stringify(param),
+                        success: function (data) {
+                            if (data.success) {
+                                kendo.ui.showInfoDialog({
+                                    title: "<@spring.message 'hap.message_point'/>",
+                                    width: 400,
+                                    message: '<@spring.message "hap.save_success"/>'
+                                });
+                            }
+                            options.success(data);
+                        }
+                    });
+                },
+                <!--更新记录-->
+                update: function (options) {
+                    $.ajax({
+                        url: "${base.contextPath}/OrderLine",
+                        type: "PUT",
+                        contentType: "application/json",
+                        dataType: "json",
+                        data: JSON.stringify(options.data),
+                        success: function (data) {
+                            if (data.success) {
+                                kendo.ui.showInfoDialog({
+                                    title: "<@spring.message 'hap.message_point'/>",
+                                    width: 400,
+                                    message: "<@spring.message 'hap.update_success'/>"
+                                });
+                            }
+                            options.success(data);
+                        }
+                    });
+                },
+                <!--删除记录-->
+                destroy: function (options) {
+                    $.ajax({
+                        url: "${base.contextPath}/OrderLine",
+                        type: "DELETE",
+                        contentType: "application/json",
+                        dataType: "json",
+                        data: JSON.stringify(options.data),
+                        success: function (data) {
+                            if (data.success) {
+                                kendo.ui.showInfoDialog({
+                                    title: "<@spring.message 'hap.message_point'/>",
+                                    width: 400,
+                                    message: "<@spring.message 'hap.mesg_delete'/>"
+                                });
+                            }
+                            options.success(data);
+                        }
+                    });
+                }
+            },
+            schema: {
+                data: "rows",
+                total: "total",
+                model: {
+                    id: "lineId",
+                    fields: {
+                        lineNumber: {from: "lineNumber",validation: {required: false},editable: false},
+                        inventoryItemId: {validation: {required: true}},
+                        itemDescription: {validation: {required: false},editable: false},
+                        orderQuantityUom: {from: "orderQuantityUom", validation: {required: false},editable: false},
+                        orderQuantity: {from: "orderQuantity", validation: {required: true,min: 1},type:"long"},
+                        unitSellingPrice: {from: "unitSellingPrice", validation: {required: true},type:"double"},
+                        countPrice: {from: "countPrice", validation: {required: false},editable: false},
+                        description: {from: "description", validation: {required: false}},
+                        attribute1: {from: "attribute1", validation: {required: false}},
+                        attribute2: {from: "attribute2", validation: {required: false}},
+                        attribute3: {from: "attribute3", validation: {required: false}},
+                        attribute4: {from: "attribute4", validation: {required: false}},
+                        attribute5: {from: "attribute5", validation: {required: false}}
+                    }
+                }
+            },
+            serverPaging: true,
+            pageSize: 5
+        });
+
+        $("#grid").kendoGrid({
+            toolbar: [{
+                name: "create",
+                template: '<span class="btn btn-primary k-grid-add">#=text#</span>'
+            }, {
+                name: "save",
+                template: '<span class="btn btn-success k-grid-save-changes">#=text#</span>'
+            }, {
+                template: '<span id="delete" class="btn btn-danger"><@spring.message "hap.delete"/></span>'
+            }, {
+                name: "cancel",
+                template: '<span class="btn btn-default k-grid-cancel-changes">#=text#</span>'
+            }],
+            <!--记录列名-->
+            columns: [
+                {field: "lineNumber", title: '<@spring.message "hap.line_number"/>'},
+                {field: "inventoryItemId", title: '<@spring.message "hap.inventory_code"/>',
+                    template: function (dataItem) {
+                        if(dataItem.itemCode != null && dataItem.itemCode != undefined){
+                            return dataItem.itemCode;
+                        }
+                        if(dataItem.inventoryItem != null){
+                            return dataItem.inventoryItem.itemCode;
+                        }
+                        return '';
+                    },
+                    editor: function (container, options) {
+                        $('<input name="' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoLov($.extend(<@lov "INVENTORY_ITEM_LOV_ID"/>, {
+                            textField: 'itemCode',
+                            model: options.model
+                        }));
+                    }
+                },
+                {field: "itemDescription", title:'<@spring.message "hap.item_description"/>',
+                    template: function (dataItem) {
+                        if(dataItem.itemDescription != null && dataItem.itemDescription != undefined){
+                            return dataItem.itemDescription;
+                        }
+                        if(dataItem.inventoryItem != null){
+                            return dataItem.inventoryItem.itemDescription;
+                        }
+                        return '';
+                    }
+                },
+                {field: "orderQuantityUom", title: '<@spring.message "hap.order_quantity_uom"/>'},
+                {field: "orderQuantity", title: '<@spring.message "hap.order_quantity"/>'},
+                {field: "unitSellingPrice", title: '<@spring.message "hap.unit_selling_price"/>'},
+                {field: "countPrice", title: '<@spring.message "hap.price"/>'},
+                {field: "description", title: '<@spring.message "hap.order_line_description"/>'}
+            ],
+            dataSource : dataSource,
+            selectable: "multiple rowbox",
+            editable: true,
+            pageable: {
+                pageSizes: ['All', 5, 10, 20, 50],
+                refresh: true,
+                buttonCount: 5
+            }
+        });
+
+
+        $("#grid2").kendoGrid({
+            toolbar: [{
+                name: "save",
+                template: '<span class="btn btn-success k-grid-save-changes">#=text#</span>'
+            }, {
+                name: "cancel",
+                template: '<span class="btn btn-default k-grid-cancel-changes">#=text#</span>'
+            }],
+            <!--记录列名-->
+            columns: [
+                {field: "lineNumber", title: '<@spring.message "hap.line_number"/>'},
+                {field: "attribute1",title:'<@spring.message "hap.other_message"/>1'},
+                {field: "attribute2",title:'<@spring.message "hap.other_message"/>2'},
+                {field: "attribute3",title:'<@spring.message "hap.other_message"/>3'},
+                {field: "attribute4",title:'<@spring.message "hap.other_message"/>4'},
+                {field: "attribute5",title:'<@spring.message "hap.other_message"/>5'}
+            ],
+            dataSource : dataSource,
+            editable: true,
+            pageable: {
+                pageSizes: ['All', 5, 10, 20, 50],
+                refresh: true,
+                buttonCount: 5
+            }
+        });
+
+        $("#delete").click(function () {
+            Hap.deleteGridSelection({grid: $('#grid')});
+        });
+    </script>
+</html>

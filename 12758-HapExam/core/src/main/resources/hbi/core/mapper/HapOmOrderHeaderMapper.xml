@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="hbi.core.mapper.HapOmOrderHeaderMapper">
+<!--    <resultMap id="" type="" extends="com.hand.hap.mapper.StdMapper.STD">
+
+    </resultMap>-->
+	<resultMap id="myHapOmOrderHeader" type="hbi.core.dto.HapOmOrderHeader" extends="com.hand.hap.mapper.StdMapper.STD">
+		<id column="HEADER_ID" property="headerId"></id>
+		<result column="ORDER_NUMBER" property="orderNumber"></result>
+		<result column="ORDER_DATE" property="orderDate"></result>
+		<result column="ORDER_STATUS" property="orderStatus"></result>
+		<result column="TOTAL_PRICE" property="totalPrice"></result>
+		<association property="company" column="companyId" javaType="hbi.core.dto.HapOrgCompany">
+			<id column="COMPANY_ID" property="companyId"></id>
+			<result column="COMPANY_NAME" property="companyName"></result>
+			<result column="COMPANY_NUMBER" property="companyNumber"></result>
+		</association>
+		<association property="customer" column="customerId" javaType="hbi.core.dto.HapArCustomer">
+			<id column="CUSTOMER_ID" property="customerId"></id>
+			<result column="CUSTOMER_NAME" property="customerName"></result>
+			<result column="CUSTOMER_NUMBER" property="customerNumber"></result>
+		</association>
+	</resultMap>
+    <select id="selectByConditions" parameterType="java.util.Map" resultMap="myHapOmOrderHeader">
+		SELECT headers.HEADER_ID,
+			 headers.ORDER_NUMBER,
+			 companys.COMPANY_NAME,
+			 companys.COMPANY_NUMBER,
+			 customers.CUSTOMER_NAME,
+			 customers.CUSTOMER_NUMBER,
+			 headers.ORDER_DATE,
+			 headers.ORDER_STATUS,
+			 ifnull((select SUM(ifnull(order_lines.UNIT_SELLING_PRICE,0) * IFNULL(order_lines.ORDERD_QUANTITY,0))
+							from hap_om_order_lines order_lines where order_lines.HEADER_ID = headers.HEADER_ID),0) TOTAL_PRICE
+			 from
+			 hap_om_order_headers headers,
+			 hap_org_companys companys,
+			 hap_ar_customers customers
+				 where headers.COMPANY_ID = companys.COMPANY_ID and headers.CUSTOMER_ID = customers.CUSTOMER_ID
+				<if test="headerId != null">
+					and headers.HEADER_ID = #{headerId}
+				</if>
+				 <if test="companyId != null">
+					 and companys.COMPANY_ID = #{companyId}
+				 </if>
+				<if test="customerId != null">
+					and  customers.CUSTOMER_ID = #{customerId}
+				</if>
+				<if test="orderNumber != null">
+					and headers.ORDER_NUMBER = #{orderNumber}
+				</if>
+				<if test="orderStatus != null">
+					and headers.ORDER_STATUS = #{orderStatus}
+				</if>
+				 <if test="itemCode != null">
+					 and EXISTS (select * from hap_om_order_lines order_lines , hap_inv_inventory_items inventory_items
+					 where order_lines.HEADER_ID = headers.HEADER_ID and order_lines.INVENTORY_ITEM_ID = inventory_items.INVENTORY_ITEM_ID
+					 and inventory_items.ITEM_CODE = #{itemCode})
+				 </if>
+			 order by headers.HEADER_ID
+    </select>
+</mapper>

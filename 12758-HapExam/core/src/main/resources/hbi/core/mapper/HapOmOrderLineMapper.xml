@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="hbi.core.mapper.HapOmOrderLineMapper">
+<!--    <resultMap id="" type="" extends="com.hand.hap.mapper.StdMapper.STD">
+
+    </resultMap>-->
+	<resultMap id="myHapOmOrderLine" type="hbi.core.dto.HapOmOrderLine" extends="com.hand.hap.mapper.StdMapper.STD">
+		<id column="LINE_ID" property="lineId"></id>
+		<result column="LINE_NUMBER" property="lineNumber"></result>
+		<result column="DESCRIPTION" property="description"></result>
+		<result column="ORDER_QUANTITY_UOM" property="orderQuantityUom"></result>
+		<result column="UNIT_SELLING_PRICE" property="unitSellingPrice"></result>
+		<result column="ORDERD_QUANTITY" property="orderQuantity"></result>
+		<result column="COUNTPRICE" property="countPrice"></result>
+		<result column="HEADER_ID" property="headerId"></result>
+		<result column="INVENTORY_ITEM_ID" property="inventoryItemId"></result>
+		<result column="ATTRIBUTE1" property="attribute1"></result>
+		<result column="ATTRIBUTE2" property="attribute2"></result>
+		<result column="ATTRIBUTE3" property="attribute3"></result>
+		<result column="ATTRIBUTE4" property="attribute4"></result>
+		<result column="ATTRIBUTE5" property="attribute5"></result>
+		<association property="inventoryItem" javaType="hbi.core.dto.HapInvInventoryItem">
+			<id column="INVENTORY_ITEM_ID" property="inventoryItemId"></id>
+			<result column="ITEM_CODE" property="itemCode"></result>
+			<result column="ITEM_DESCRIPTION" property="itemDescription"></result>
+		</association>
+	</resultMap>
+    <select id="selectByHeaderId" parameterType="hbi.core.dto.HapOmOrderLine" resultMap="myHapOmOrderLine">
+		SELECT
+			order_lines.LINE_ID,
+			order_lines.LINE_NUMBER,
+			order_lines.ORDERD_QUANTITY,
+			order_lines.UNIT_SELLING_PRICE,
+			order_lines.ORDER_QUANTITY_UOM,
+			order_lines.DESCRIPTION,
+			order_lines.INVENTORY_ITEM_ID,
+			inventory_items.ITEM_CODE,
+			inventory_items.ITEM_DESCRIPTION,
+			(UNIT_SELLING_PRICE * ORDERD_QUANTITY) COUNTPRICE,
+			order_lines.ATTRIBUTE1,
+			order_lines.ATTRIBUTE2,
+			order_lines.ATTRIBUTE3,
+			order_lines.ATTRIBUTE4,
+			order_lines.ATTRIBUTE5
+			from
+			hap_om_order_lines order_lines,hap_inv_inventory_items inventory_items
+			where order_lines.INVENTORY_ITEM_ID = inventory_items.INVENTORY_ITEM_ID
+			and order_lines.HEADER_ID = #{headerId}
+    </select>
+	<insert id="insertByOrderLine" parameterType="hbi.core.dto.HapOmOrderLine" keyProperty="headerId" useGeneratedKeys="true">
+		insert into hap_om_order_lines(ORDERD_QUANTITY,UNIT_SELLING_PRICE,DESCRIPTION,INVENTORY_ITEM_ID,HEADER_ID,ORDER_QUANTITY_UOM,COMPANY_ID,LINE_NUMBER,
+			ATTRIBUTE1,ATTRIBUTE2,ATTRIBUTE3,ATTRIBUTE4,ATTRIBUTE5)
+			values(#{orderQuantity},#{unitSellingPrice},#{description},#{inventoryItemId},#{headerId},
+				(select ITEM_UOM from hap_inv_inventory_items where INVENTORY_ITEM_ID = #{inventoryItemId}),
+				(select COMPANY_ID from hap_om_order_headers where HEADER_ID = #{headerId}),
+				(select ifnull(max(line.LINE_NUMBER),0) from hap_om_order_lines line) + 1,
+				#{attribute1},#{attribute2},#{attribute3},#{attribute4},#{attribute5})
+	</insert>
+	<update id="updateByOrderLine" parameterType="hbi.core.dto.HapOmOrderLine">
+		update hap_om_order_lines
+		set ORDERD_QUANTITY = #{orderQuantity},
+		ORDER_QUANTITY_UOM = #{orderQuantityUom},
+		UNIT_SELLING_PRICE = #{unitSellingPrice},
+		DESCRIPTION = #{description},
+		INVENTORY_ITEM_ID = #{inventoryItemId},
+		ATTRIBUTE1 = #{attribute1},
+		ATTRIBUTE2 = #{attribute2},
+		ATTRIBUTE3 = #{attribute3},
+		ATTRIBUTE4 = #{attribute4},
+		ATTRIBUTE5 = #{attribute5}
+		where LINE_ID = #{lineId}
+	</update>
+	<delete id="deleteByHeaderId" parameterType="hbi.core.dto.HapOmOrderLine">
+		delete from hap_om_order_lines where HEADER_ID = #{headerId}
+	</delete>
+</mapper>
